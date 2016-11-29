@@ -441,7 +441,7 @@ public class Cafe {
     * @return User type or null if the type cannot be retrieved
     **/
 
-   public static String find_type(Cafe esql){
+   public static String find_type(Cafe esql){ // completed by Ronson
       String type = "There is an error";
       try{
 	 String login = authorisedUser; 
@@ -484,15 +484,58 @@ public class Cafe {
    }//end 
 
    public static void UpdateOrder(Cafe esql){ // this function is for customer only
-      // Your code goes here.
-      // ...
-      // ...
+      // Only update, add is separate
+      // Allowed to update any non-paid order created by THEMSELVES. 
+      // In order to modify an order, the Customer should type in the OrderID for that order.
+      // This means orderhistory or orderstatus should contain the orderIDs, for the user to see.
+      
+      // Menu for customer on updating orders .... order is not paid AND item status = hasnt started
+      // 1. Modify order ---> input orderid ---> display all items in order --> add/remove --> pick item from display
+      //    a. add item  
+      //    b. remove item (only if item status hasnt started).. when adding or removing item, also update order price total
+      //    c. Cancel
+      // 2. Go back
+      boolean customermenu = true;
+      try {
+         while(customermenu) {
+            System.out.println("UPDATE MENU");
+            System.out.println("-----------");
+            System.out.println("1. Modify Order");
+            System.out.println("...............");
+            System.out.println("2. Go back");
+            switch (readChoice()) {
+               case 1:
+                  int input;
+                  System.out.println("Please enter the orderID:");
+                  try {
+                     input = Integer.parseInt(in.readLine());
+                  }catch (Exception e) {
+                      System.out.println("Your input is invalid!");
+                      break;
+                  }
+                  // check if orderID is accessible for current user
+                  // if not, break;
+                  // else, print list of items for order  || IMPORTANT: PRIMARY KEY -> orderID + itemname --> itemname is unique in an order  
+                  boolean mod = true;
+                  while(mod) {
+                     //here, give options to add or remove item from order IF item is 'hasnt started'
+                  } 
+                  break;
+               case 2:
+                  customermenu = false;
+                  break;
+            }
+         }
+      }catch(Exception e) {
+          System.err.println (e.getMessage ());
+      }
    }//end
 
    public static void EmployeeUpdateOrder(Cafe esql){ // this function is for employee/manager
       // Your code goes here.
       // ...
-      // ...
+      // Since this function is shared between employee/manager, check which user type before 
+      // completing algorithm
    }//end
 
    public static void ViewOrderHistory(Cafe esql){
@@ -504,7 +547,7 @@ public class Cafe {
    public static void UpdateUserInfo(Cafe esql){ // customer/employee share this function
       // Your code goes here.
       // ...
-      // ...
+      // check user type before completing algorithm
    }//end
 
    public static void ManagerUpdateUserInfo(Cafe esql){ // manager uses this function
