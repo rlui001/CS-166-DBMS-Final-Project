@@ -519,10 +519,10 @@ public class Cafe {
                   } 
                   // check if orderID is accessible for current user
                   // if not, break;
-		  String query = String.format("SELECT * FROM Orders WHERE login = '%s' AND orderid = '%s'", authorisedUser, input);
+		  String query = String.format("SELECT * FROM Orders WHERE login = '%s' AND orderid = '%s' AND paid='false'", authorisedUser, input);
                   int check = esql.executeQuery(query);
 		  if (check <=  0) {
-		     System.out.println("You did not place this order!");
+		     System.out.println("You did not place this order or the order has already been paid.");
 		     break;
                   }
                   // else, print list of items for order  || IMPORTANT: PRIMARY KEY -> orderID + itemname --> itemname is unique in an order
@@ -578,10 +578,134 @@ public class Cafe {
    }//end
 
    public static void EmployeeUpdateOrder(Cafe esql){ // this function is for employee/manager
-      // Your code goes here.
-      // ...
-      // Since this function is shared between employee/manager, check which user type before 
-      // completing algorithm
+      boolean employeemenu = true;
+      int oid;
+      String query;
+      try {
+         while (employeemenu) {
+            System.out.println("UPDATE MENU");
+            System.out.println("-----------");
+            System.out.println("1. Update item status");
+            System.out.println("2. Update order status");
+            System.out.println("......................");
+            System.out.println("3. Go back");
+            switch (readChoice()) {
+               case 1:
+                  System.out.println("Enter the order id to modify: ");
+                  try {
+                     oid = Integer.parseInt(in.readLine());
+                  }catch(Exception e) {
+                     System.out.println("Your input is invalid!");
+                     break;
+                  }
+                  query = String.format("SELECT * FROM Orders WHERE orderid = '%s'", oid);
+                  int oid_check = esql.executeQuery(query);
+                  if (oid_check > 0) {
+                     query = String.format("SELECT itemName,status FROM ItemStatus WHERE orderid = '%s'", oid);
+                     System.out.println("ITEMS FOR THIS ORDER");
+                     System.out.println("---------------------------------");
+                     int check_item = esql.executeQueryAndPrintResult(query);
+                     if (!(check_item > 0)) {
+                        System.out.println("For some reason, there are no items in this order...");
+                        break;
+                     }
+                     System.out.println("---------------------------------");
+                     boolean item_menu = true;
+                     while (item_menu) {
+                        System.out.println("ITEM STATUS UPDATE");
+                        System.out.println("------------------");
+                        System.out.println("1. Hasn't started");
+                        System.out.println("2. Started");
+                        System.out.println("3. Finished");
+                        System.out.println(".................");
+                        System.out.println("4. Go back");
+                        switch (readChoice()) {
+                           case 1:
+                              System.out.println("Enter the item you want to modify: ");
+                              String item = in.readLine();
+                              query = String.format("UPDATE ItemStatus SET status='Hasn''t Started' WHERE orderid='%s' AND itemName='%s'", oid, item);
+                              esql.executeUpdate(query);
+                              System.out.println("Status for item successfully changed to 'Hasn't Started'");
+                              break;
+                           case 2: 
+                              System.out.println("Enter the item you want to modify: ");
+                              item = in.readLine();
+                              query = String.format("UPDATE ItemStatus SET status='Started' WHERE orderid='%s' AND itemName='%s'", oid, item);
+                              esql.executeUpdate(query);
+                              System.out.println("Status for item successfully changed to 'Started'");
+                              break;
+                           case 3:
+                              System.out.println("Enter the item you want to modify: ");
+                              item = in.readLine();
+                              query = String.format("UPDATE ItemStatus SET status='Finished' WHERE orderid='%s' AND itemName='%s'", oid, item);
+                              esql.executeUpdate(query);
+                              System.out.println("Status for item successfully changed to 'Finished'");
+                              break;
+                           case 4:
+                              item_menu = false;
+                              break;
+                        }   
+                     }
+                  }
+                  else {
+                     System.out.println("This order does not exist.");
+                     break;
+                  }
+                  break;
+               case 2:
+                  System.out.println("Enter the order id to modify: ");
+                  try {
+                     oid = Integer.parseInt(in.readLine());
+                  }catch(Exception e) {
+                     System.out.println("Your input is invalid!");
+                     break;
+                  }
+                  query = String.format("SELECT paid FROM Orders WHERE orderid='%s'", oid);
+                  oid_check = esql.executeQuery(query);
+                  if (oid_check > 0) {
+                     System.out.println("-----------------------------------------------");
+                     esql.executeQueryAndPrintResult(query);
+                     System.out.println("-----------------------------------------------");
+                     System.out.println("ORDER STATUS UPDATE");
+                     System.out.println("-------------------");
+                     System.out.println("1. Paid");
+                     System.out.println("2. Not paid");
+                     System.out.println("...........");
+                     System.out.println("3. Go back");
+                     boolean order_menu = true;
+                     while (order_menu) {
+                        switch (readChoice()) {    // don't want to continuously loop for this, b/c it is either/or for a single order
+                           case 1:
+                              query = String.format("UPDATE Orders SET paid='true' WHERE orderid='%s'", oid);
+                              esql.executeUpdate(query);
+                              System.out.println("Status for order successfully changed.");
+                              order_menu = false;
+                              break;
+                           case 2:
+                              query = String.format("UPDATE Orders SET paid='false' WHERE orderid='%s'", oid);
+                              esql.executeUpdate(query);
+                              System.out.println("Status for order successfully changed.");
+                              order_menu = false;
+                              break;
+                           case 3:
+                              order_menu = false;
+                              break;
+                        }
+                     }
+                  }
+                  else {
+                     System.out.println("This order does not exist.");
+                     break;
+                  }
+               case 3:
+                  employeemenu = false;
+                  break;
+
+            }
+         }
+      }catch(Exception e) {
+         System.err.println(e.getMessage());
+      }
    }//end
 
    public static void ViewOrderHistory(Cafe esql){
