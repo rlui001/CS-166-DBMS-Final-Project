@@ -115,12 +115,14 @@ public class Cafe {
 	 if(outputHeader){
 	    for(int i = 1; i <= numCol; i++){
 		System.out.print(rsmd.getColumnName(i) + "\t");
+		//System.out.printf("%-24s", rsmd.getColumnName(i)); 
 	    }
 	    System.out.println();
 	    outputHeader = false;
 	 }
          for (int i=1; i<=numCol; ++i)
-            System.out.print (rs.getString (i) + "\t");
+            System.out.print (rs.getString(i));
+            // System.out.printf("%24s", rs.getString(i));
          System.out.println ();
          ++rowCount;
       }//end while
@@ -265,7 +267,7 @@ public class Cafe {
             if (authorisedUser != null) {
               boolean usermenu = true;
               String user_type = find_type(esql);
-              System.out.println(user_type); // to test user type
+              //System.out.println(user_type); // to test user type
 	      switch (user_type){
 		case "Customer": 
 		  while(usermenu) {
@@ -317,7 +319,7 @@ public class Cafe {
                        default : System.out.println("Unrecognized choice!"); break;
 		      }//end switch
 		  } break;
-		case "Manager": 
+		case "Manager ":		// full string has space at end or it won't detect 
 		  while(usermenu) {
                     System.out.println("MAIN MENU");
                     System.out.println("---------");
@@ -429,9 +431,10 @@ public class Cafe {
          int userNum = esql.executeQuery(query);
 	 if (userNum > 0)
 		return login;
+	 System.out.println("Incorrect PW or user does not exist. (case-sensitive)");
          return null;
       }catch(Exception e){
-         System.err.println (e.getMessage ());
+         System.err.println (e.getMessage());
          return null;
       }
    }//end
@@ -444,9 +447,9 @@ public class Cafe {
    public static String find_type(Cafe esql){ // completed by Ronson
       String type = "There is an error";
       try{
-	 String login = authorisedUser; 
+	 //String login = authorisedUser; 
 	 String query = String.format("SELECT type FROM Users WHERE login = '%s'", authorisedUser);
-	 List<List<String>> result = esql.executeQueryAndReturnResult(query);
+	 List<List<String>> result = esql.executeQueryAndReturnResult(query); 
 	 if (result.size() > 0) { // If no data, return error --> all users should have a type
 	    type = result.get(0).get(0);
 	 }
@@ -483,7 +486,7 @@ public class Cafe {
       return orderid;
    }//end 
 
-   public static void UpdateOrder(Cafe esql){ // this function is for customer only
+   public static void UpdateOrder(Cafe esql){ // this function is for customer only || completed by RL
       // Only update, add is separate
       // Allowed to update any non-paid order created by THEMSELVES. 
       // In order to modify an order, the Customer should type in the OrderID for that order.
@@ -493,7 +496,8 @@ public class Cafe {
       // 1. Modify order ---> input orderid ---> display all items in order --> add/remove --> pick item from display
       //    a. add item  
       //    b. remove item (only if item status hasnt started).. when adding or removing item, also update order price total
-      //    c. Cancel
+      //    c. edit comment on item
+      //    d. Cancel
       // 2. Go back
       boolean customermenu = true;
       try {
@@ -508,17 +512,59 @@ public class Cafe {
                   int input;
                   System.out.println("Please enter the orderID:");
                   try {
-                     input = Integer.parseInt(in.readLine());
+                     input = Integer.parseInt( in.readLine());
                   }catch (Exception e) {
                       System.out.println("Your input is invalid!");
                       break;
-                  }
+                  } 
                   // check if orderID is accessible for current user
                   // if not, break;
-                  // else, print list of items for order  || IMPORTANT: PRIMARY KEY -> orderID + itemname --> itemname is unique in an order  
+		  String query = String.format("SELECT * FROM Orders WHERE login = '%s' AND orderid = '%s'", authorisedUser, input);
+                  int check = esql.executeQuery(query);
+		  if (check <=  0) {
+		     System.out.println("You did not place this order!");
+		     break;
+                  }
+                  // else, print list of items for order  || IMPORTANT: PRIMARY KEY -> orderID + itemname --> itemname is unique in an order
+                  else {
+		     String test = "%Hasn''t%";
+	             query = String.format("Select itemName,comments FROM ItemStatus WHERE orderid = '%s' AND status LIKE '%s'", input, test);
+		     System.out.println("YOUR ORDER || ONLY ITEMS THAT CAN BE MODIFIED ARE SHOWN");
+		     System.out.println("-------------------------------------------------------");
+		     int check_item = esql.executeQueryAndPrintResult(query);
+                     if (!(check_item > 0)) {
+                        System.out.println("There are no items that can be modified for this order.");
+                        break;
+                     }
+		     System.out.println("-------------------------------------------------------");
+		  }  
                   boolean mod = true;
                   while(mod) {
-                     //here, give options to add or remove item from order IF item is 'hasnt started'
+                     //here, give options to add or remove item from order IF item is 'hasnt started' OPTIONAL
+                     System.out.println("UPDATE MENU");
+		     System.out.println("-----------");
+                     System.out.println("1. Edit comment");
+                     System.out.println("...............");
+                     System.out.println("2. Go back");
+                     switch (readChoice()) {
+                        case 1:
+                           System.out.println("Please enter the name of the item you wish to modify.");
+                           String item = "%" + in.readLine() + "%"; 
+                           System.out.println("Please enter your comment(130 chars max)");
+                           String userInput = in.readLine();
+			   if (userInput.length() > 130) {
+                              System.out.println("Exceeded max character limit. Update failed.");
+                              break;
+                           }
+                           else {
+                              query = String.format("UPDATE ItemStatus SET comments='%s' WHERE orderid = '%s' AND itemName LIKE '%s'", userInput, input, item );
+                              esql.executeUpdate(query);
+			      break;
+                           }
+                        case 2:
+                           mod = false;
+                           break;
+                     }
                   } 
                   break;
                case 2:
