@@ -715,15 +715,172 @@ public class Cafe {
    }//end
 
    public static void UpdateUserInfo(Cafe esql){ // customer/employee share this function
-      // Your code goes here.
-      // ...
-      // check user type before completing algorithm
+      boolean profile_menu = true;
+      String query;
+      String item;
+      int check_val;
+      while (profile_menu) {
+         try {
+            System.out.println("UPDATE PROFILE MENU");
+            System.out.println("-------------------");
+            System.out.println("1. Change favorite items");
+            System.out.println("2. Change password");
+            System.out.println("........................");
+            System.out.println("3. Go back");
+            switch (readChoice()) {
+               case 1:
+                  query = String.format("SELECT favItems FROM Users WHERE login='%s'", authorisedUser); // authorisedUser initialized during login check
+                  System.out.println("FAVORITE ITEMS");
+                  System.out.println("==============================");
+                  esql.executeQueryAndPrintResult(query);
+                  System.out.println("==============================");
+                  
+                  System.out.println("Enter contents to replace favItems: ");
+                  item = in.readLine();
+                  query = String.format("UPDATE Users SET favItems='%s' WHERE login='%s'", item, authorisedUser);
+                  esql.executeUpdate(query);
+                  System.out.println("Successfully updated favorite items.");
+                  break;
+
+               case 2:
+                  System.out.println("Enter your current password: ");
+                  item = in.readLine();
+                  query = String.format("SELECT * FROM Users WHERE login='%s' AND password='%s'", authorisedUser, item);
+                  check_val = esql.executeQuery(query);
+                  if (check_val > 0) {
+                     System.out.println("Enter your new password: ");
+                     item = in.readLine();
+                     query = String.format("UPDATE Users SET password='%s' WHERE login='%s'", item, authorisedUser);
+                     esql.executeUpdate(query);
+                     System.out.println("Successfully updated password.");
+                     break;
+                  }
+                  else {
+                     System.out.println("Incorrect password.");
+                     break;
+                  }
+                  
+
+               case 3:
+                  profile_menu = false;
+                  break;
+            }
+         
+         }catch(Exception e) {
+            System.err.println(e.getMessage());
+         }
+      }
    }//end
 
    public static void ManagerUpdateUserInfo(Cafe esql){ // manager uses this function
-      // Your code goes here.
-      // ...
-      // ...
+      // same functions as above, except included option to change user type and able to choose user to modify
+      String query;
+      String item;
+      String user;
+      int check_val;
+      boolean profile_menu = true;
+      while (profile_menu) {
+         try {
+            System.out.println("UPDATE PROFILE MENU");
+            System.out.println("-------------------");
+            System.out.println("1. Change favorite items");
+            System.out.println("2. Change password");
+            System.out.println("3. Change user type");
+            System.out.println("........................");
+            System.out.println("4. Go back");
+            switch (readChoice()) {
+               case 1:
+                  System.out.println("Enter the username to modify: ");
+                  user = in.readLine();
+                  query = String.format("SELECT * FROM Users WHERE login='%s'", user);
+                  check_val = esql.executeQuery(query);
+                  if (check_val > 0) {
+                     query = String.format("SELECT favItems FROM Users WHERE login='%s'", user);
+                     System.out.println("FAVORITE ITEMS");
+                     System.out.println("==========================");
+                     esql.executeQueryAndPrintResult(query);
+                     System.out.println("==========================");
+
+                     System.out.println("Enter contents to replace favItems: ");
+                     item = in.readLine();
+                     query = String.format("UPDATE Users SET favItems='%s' WHERE login='%s'", item, user);
+                     esql.executeUpdate(query);
+                     System.out.println("Successfully updated favorite items.");
+                     break;
+                  }
+                  else {
+                     System.out.println("User does not exist.");
+                     break;
+                  }
+      
+               case 2:
+                  System.out.println("Enter the username to modify: ");
+                  user = in.readLine();
+                  query = String.format("SELECT * FROM Users WHERE login='%s'", user);
+                  check_val = esql.executeQuery(query);
+                  if (check_val > 0) {
+                     System.out.println("Enter new password: ");
+                     item = in.readLine();
+                     query = String.format("UPDATE Users SET password='%s' WHERE login='%s'", item, user);
+                     esql.executeUpdate(query);
+                     System.out.println("Successfully updated password.");
+                     break;
+                  }
+                  else {
+                     System.out.println("User does not exist.");
+                     break;
+                  }
+                  
+               case 3:
+                  System.out.println("Enter the username to modify: ");
+                  user = in.readLine();
+                  query = String.format("SELECT * FROM Users WHERE login='%s'", user);
+                  check_val = esql.executeQuery(query);
+                  if (check_val > 0) {
+                    boolean menu = true;
+                    while (menu) {   
+                       System.out.println("USER TYPE");
+                       System.out.println("---------");
+                       System.out.println("1. Customer");
+                       System.out.println("2. Employee");
+                       System.out.println("3. Manager");
+                       System.out.println("...........");
+                       System.out.println("4. Go back");
+                       switch (readChoice()) {
+                          case 1:
+                             query = String.format("UPDATE Users SET type='Customer' WHERE login='%s'", user);
+                             esql.executeUpdate(query);
+                             System.out.println("User type successfully changed.");
+                             break;
+                          case 2:
+                             query = String.format("UPDATE Users SET type='Employee' WHERE login='%s'", user);
+                             esql.executeUpdate(query);
+                             System.out.println("User type successfully changed.");
+                             break;
+                          case 3:
+                             query = String.format("UPDATE Users SET type='Manager' WHERE login='%s'", user);
+                             esql.executeUpdate(query);
+                             System.out.println("User type successfully changed.");
+                             break;
+                          case 4:
+                             menu = false;
+                             break;
+                       }
+                    }   
+                  }
+                  else {
+                     System.out.println("User does not exist.");
+                  }
+
+               case 4:
+                  profile_menu = false;
+                  break;
+            }
+         }catch(Exception e) {
+            System.err.println(e.getMessage());
+         }
+      }
+      
    }//end
 
    public static void UpdateMenu(Cafe esql){ // for manager only
