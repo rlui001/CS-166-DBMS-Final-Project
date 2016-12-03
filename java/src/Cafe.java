@@ -34,6 +34,9 @@ public class Cafe {
    //login info for later use
    private static String authorisedUser = null;
 
+   //timestamp for insertion use
+   private static String timeStamp = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date());
+
    // reference to physical database connection.
    private Connection _connection = null;
 
@@ -479,10 +482,142 @@ public class Cafe {
    }//end
 
    public static Integer AddOrder(Cafe esql){
-      // Your code goes here.
-      // ...
-      // ...
+      boolean addmenu = true;
+      float price;
+      float total = 0; 
+      String query;
+      String item;
+      int check_val;
+      boolean orderPlaced = false; // keep track if an order was originally placed (for num 2)
       Integer orderid=0;
+      try {
+         while (addmenu) {
+            System.out.println("ORDER MENU");
+            System.out.println("----------");
+            System.out.println("1. Place an order");
+            System.out.println("2. Add an item to the order (must place an order (1) first)");
+            System.out.println("...........................");
+            System.out.println("3. Finish and exit");
+      
+            switch (readChoice()) {
+               case 1:
+                  System.out.println("Enter the item you wish to add to your order: ");
+                  item = in.readLine();
+                  if (item.length() == 0) {
+                     System.out.println("Item cannot be empty.");
+                     break;
+                  }
+                  
+                  query = String.format("SELECT * FROM Menu WHERE itemName='%s'", item);
+                  check_val = esql.executeQuery(query);
+                  if (check_val > 0) {
+                    // retrieve price of item
+                    query = String.format("SELECT price FROM Menu WHERE itemName='%s'", item);
+                    List<List<String>> result = esql.executeQueryAndReturnResult(query);
+                    if (result.size() > 0) {
+                       String convert = result.get(0).get(0);
+                       price = Float.parseFloat(convert);
+                    }
+                    else {
+                       System.out.println("There was an error retrieving the price of the item.");
+                       break;
+                    }
+                    // insert order first 
+                    System.out.println(timeStamp);
+                    query = String.format("INSERT INTO Orders (login, paid, timeStampRecieved, total) VALUES ('%s', 'false', '%s', '%s')", authorisedUser, timeStamp, price);
+                    esql.executeUpdate(query);
+                    
+                    // retrieve the order ID  
+                    String sequence = "Orders_orderid_seq";
+                    orderid = esql.getCurrSeqVal(sequence);
+                   
+                    // Add item to ItemStatus, given orderID
+                    query = String.format("INSERT INTO ItemStatus (orderid, itemName, lastUpdated, status) VALUES ('%s', '%s', '%s', 'Hasn''t Started')", orderid, item, timeStamp);
+                  
+                    esql.executeUpdate(query);
+                    System.out.println("Item " + item + " added to orderID " + orderid + " successfully at " + timeStamp + ".");
+                    System.out.println("Your current order total is: " + price);
+                    orderPlaced = true;
+                    break;
+                  }
+                  else {
+                     System.out.println("Item does not exist.(Case sensitive)");
+                     break;
+                  }
+               case 2:
+                  if (orderPlaced) {
+                     System.out.println("Enter the item you wish to add to your order: ");
+                     item = in.readLine();
+                     if (item.length() == 0) {
+                        System.out.println("Item name cannot be empty.");
+                        break;
+                     }
+                     query = String.format("SELECT * FROM Menu WHERE itemName='%s'", item);
+                     check_val = esql.executeQuery(query);
+                     if (check_val > 0) {
+                        // grab orderid again just in case
+                        String sequence = "Orders_orderid_seq";
+                        orderid = esql.getCurrSeqVal(sequence);
+                        
+                        // add item to ItemStatus
+                        query = String.format("INSERT INTO ItemStatus (orderid, itemName, lastUpdated, status) VALUES ('%s', '%s', '%s', 'Hasn''t Started')", orderid, item, timeStamp);
+                        esql.executeUpdate(query);
+
+                        // retrieve price of item
+                        query = String.format("SELECT price FROM Menu WHERE itemName='%s'", item);
+                        List<List<String>> result = esql.executeQueryAndReturnResult(query);
+                        if (result.size() > 0) {
+                           String convert = result.get(0).get(0);
+                           price = Float.parseFloat(convert);
+                        }
+                        else {
+                           System.out.println("There was an error updating total price.");
+                           break;
+                        }
+                        // retrieve total of order
+          
+                        query = String.format("SELECT total FROM Orders WHERE orderid='%s'", orderid); 
+                        result = esql.executeQueryAndReturnResult(query);
+                        if (result.size() > 0) {
+                           String convert = result.get(0).get(0);
+                           total = Float.parseFloat(convert);
+                        }
+                        else {
+                           System.out.println("There was an error updating total price.");
+                           break;
+                        }
+                        // add price of item total
+                        total = total + price;
+                        
+                        // update order total
+                        query = String.format("UPDATE Orders SET total='%s' WHERE orderid='%s'", total, orderid);
+                        esql.executeUpdate(query);
+                        System.out.println("Item " + item + " added to orderID " + orderid + " successfully at " + timeStamp + ".");
+                        System.out.println("Your current order total is now: " + total);
+                        break;
+                     }
+                     else {
+                        System.out.println("Item does not exist.(Case sensitive)");
+                        break;
+                     }
+                  }
+                  else {
+                     System.out.println("You have yet to start on your order.");
+                     break;
+                  }
+               case 3:
+                  if (orderPlaced) {
+                     System.out.println("Your final total is: " + total);
+                  }
+                  addmenu = false;
+                  
+                  break;
+            }
+         }
+      }catch(Exception e) {
+         System.err.println(e.getMessage());
+         return null;
+      }
       return orderid;
    }//end 
 
@@ -564,7 +699,7 @@ public class Cafe {
                               break;
                            }
                            else {
-                              query = String.format("UPDATE ItemStatus SET comments='%s' WHERE orderid = '%s' AND itemName LIKE '%s'", userInput, input, item );
+                              query = String.format("UPDATE ItemStatus SET comments='%s' AND lastUpdated = '%s' WHERE orderid = '%s' AND itemName LIKE '%s'", userInput, timeStamp,  input, item );
                               esql.executeUpdate(query);
 			      break;
                            }
@@ -630,21 +765,21 @@ public class Cafe {
                            case 1:
                               System.out.println("Enter the item you want to modify: ");
                               String item = in.readLine();
-                              query = String.format("UPDATE ItemStatus SET status='Hasn''t Started' WHERE orderid='%s' AND itemName='%s'", oid, item);
+                              query = String.format("UPDATE ItemStatus SET status='Hasn''t Started' AND lastUpdated='%s' WHERE orderid='%s' AND itemName='%s'", timeStamp, oid, item);
                               esql.executeUpdate(query);
                               System.out.println("Status for item successfully changed to 'Hasn't Started'");
                               break;
                            case 2: 
                               System.out.println("Enter the item you want to modify: ");
                               item = in.readLine();
-                              query = String.format("UPDATE ItemStatus SET status='Started' WHERE orderid='%s' AND itemName='%s'", oid, item);
+                              query = String.format("UPDATE ItemStatus SET status='Started' AND lastUpdated='%s' WHERE orderid='%s' AND itemName='%s'", timeStamp, oid, item);
                               esql.executeUpdate(query);
                               System.out.println("Status for item successfully changed to 'Started'");
                               break;
                            case 3:
                               System.out.println("Enter the item you want to modify: ");
                               item = in.readLine();
-                              query = String.format("UPDATE ItemStatus SET status='Finished' WHERE orderid='%s' AND itemName='%s'", oid, item);
+                              query = String.format("UPDATE ItemStatus SET status='Finished' AND lastUpdated='%s' WHERE orderid='%s' AND itemName='%s'", timeStamp, oid, item);
                               esql.executeUpdate(query);
                               System.out.println("Status for item successfully changed to 'Finished'");
                               break;
