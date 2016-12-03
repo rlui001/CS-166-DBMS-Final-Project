@@ -549,7 +549,14 @@ public class Cafe {
                      switch (readChoice()) {
                         case 1:
                            System.out.println("Please enter the name of the item you wish to modify.");
-                           String item = "%" + in.readLine() + "%"; 
+                           String item = "%" + in.readLine() + "%";
+                           // check if item exists in database
+                           query = String.format("SELECT * FROM ItemStatus WHERE orderid='%s' AND itemName LIKE '%s'", input, item);
+                           int check_value = esql.executeQuery(query);
+                           if (!(check_value > 0)) {
+                              System.out.println("This item does not exist or cannot be modified.");
+                              break;
+                           }  
                            System.out.println("Please enter your comment(130 chars max)");
                            String userInput = in.readLine();
 			   if (userInput.length() > 130) {
@@ -750,6 +757,10 @@ public class Cafe {
                   if (check_val > 0) {
                      System.out.println("Enter your new password: ");
                      item = in.readLine();
+                     if (item.length() == 0) {
+                        System.out.println("Password cannot be empty.");
+                        break;
+                     }
                      query = String.format("UPDATE Users SET password='%s' WHERE login='%s'", item, authorisedUser);
                      esql.executeUpdate(query);
                      System.out.println("Successfully updated password.");
@@ -772,7 +783,7 @@ public class Cafe {
       }
    }//end
 
-   public static void ManagerUpdateUserInfo(Cafe esql){ // manager uses this function
+   public static void ManagerUpdateUserInfo(Cafe esql){ // manager uses this function RL
       // same functions as above, except included option to change user type and able to choose user to modify
       String query;
       String item;
@@ -821,6 +832,10 @@ public class Cafe {
                   if (check_val > 0) {
                      System.out.println("Enter new password: ");
                      item = in.readLine();
+                     if (item.length() == 0) {
+                        System.out.println("Password cannot be empty.");
+                        break;
+                     }
                      query = String.format("UPDATE Users SET password='%s' WHERE login='%s'", item, user);
                      esql.executeUpdate(query);
                      System.out.println("Successfully updated password.");
@@ -884,9 +899,137 @@ public class Cafe {
    }//end
 
    public static void UpdateMenu(Cafe esql){ // for manager only
-      // Your code goes here.
-      // ...
-      // ...
+      // add, delete, update items on menu
+      String query;
+      float price;
+      int check_val;
+      boolean menu = true;
+      while (menu) {
+         try {
+            System.out.println("UPDATE MENU");
+            System.out.println("-----------");
+            System.out.println("1. Add item");
+            System.out.println("2. Delete item");
+            System.out.println("3. Update item");
+            System.out.println("..............");
+            System.out.println("4. Go back");
+            switch (readChoice()) {
+               case 1:
+                  System.out.println("Enter the name of the item: ");
+                  String item_name = in.readLine();
+                  if (item_name.length() == 0) {
+                     System.out.println("Item name cannot be empty");
+                     break;
+                  }
+                  System.out.println("Enter the item type: ");
+                  String item_type = in.readLine();
+                  if (item_type.length() == 0) {
+                     System.out.println("Item type cannot be empty");
+                     break;
+                  }
+                  System.out.println("Enter the price: ");
+                  try {
+                     price = Float.parseFloat(in.readLine());
+                  }catch(Exception e) {
+                     System.out.println("Please enter an appropriate value. Example: 1.99");
+                     break;
+                  }
+                  System.out.println("Enter the description: ");
+                  String description = in.readLine();
+                  System.out.println("Enter the image URL: ");
+                  String image_url = in.readLine();
+                  
+                  query = String.format("INSERT INTO Menu (itemName, type, price, description, imageURL) VALUES ('%s', '%s', '%s', '%s', '%s')", item_name, item_type, price, description, image_url);
+                  esql.executeUpdate(query);
+                  System.out.println("Added item to menu.");
+                  break;
+               case 2:
+                  System.out.println("Enter the name of the item: ");
+                  item_name = in.readLine();
+                  query = String.format("SELECT * FROM Menu WHERE itemName='%s'", item_name);
+                  check_val = esql.executeQuery(query);
+                  if (check_val > 0) {
+                     query = String.format("DELETE FROM Menu WHERE itemName='%s'", item_name);
+                     esql.executeUpdate(query);
+                     System.out.println("Removed item from menu.");
+                     break;
+                  }
+                  else {
+                     System.out.println("This item is not in the menu.");
+                     break;
+                  }
+               case 3:
+                  System.out.println("Enter the name of the item: ");
+                  item_name = in.readLine();
+                  query = String.format("SELECT * FROM Menu WHERE itemName='%s'", item_name);
+                  check_val = esql.executeQuery(query);
+                  if (check_val > 0) {
+                     boolean up_menu = true;
+                     while (up_menu) {
+                        System.out.println("UPDATE MENU");
+                        System.out.println("-----------");
+                        System.out.println("1. Type");
+                        System.out.println("2. Price");
+                        System.out.println("3. Description");
+                        System.out.println("4. Image URL");
+                        System.out.println("..............");
+                        System.out.println("5. Go back");
+                        switch (readChoice()) {
+                           case 1:
+                              System.out.println("Enter the type: ");
+                              item_type = in.readLine();
+                              if (item_type.length() == 0) {
+                                 System.out.println("Item type cannot be empty.");
+                                 break;
+                              }
+                              query = String.format("UPDATE Menu SET type='%s' WHERE itemName='%s'", item_type, item_name);
+                              esql.executeUpdate(query);
+                              System.out.println("Item type successfully updated.");
+                              break;
+                           case 2:
+                              System.out.println("Enter the price: ");
+                              try {
+                                 price = Float.parseFloat(in.readLine());
+                              }catch(Exception e) {
+                                 System.out.println("Please enter an appropriate value. Example: 1.99");
+                                 break;
+                              }
+                              query = String.format("UPDATE Menu SET price='%s' WHERE itemName='%s'", price, item_name);
+                              esql.executeUpdate(query);
+                              System.out.println("Item price successfully updated.");
+                              break;
+                           case 3:
+                              System.out.println("Enter the description: ");
+                              description = in.readLine();
+                              query = String.format("UPDATE Menu SET description='%s' WHERE itemName='%s'", description, item_name);
+                              esql.executeUpdate(query);
+                              System.out.println("Description successfully updated.");
+                              break;
+                           case 4:
+                              System.out.println("Enter the Image URL: ");
+                              image_url = in.readLine();
+                              query = String.format("UPDATE Menu SET imageURL='%s' WHERE itemName='%s'", image_url, item_name);
+                              esql.executeUpdate(query);
+                              System.out.println("Image URL successfully updated.");
+                              break;
+                           case 5:
+                              up_menu = false;
+                              break;
+                        }    
+                     }
+                  }
+                  else {
+                     System.out.println("This item is not in the menu.");
+                     break;
+                  }
+               case 4:
+                  menu = false;
+                  break;
+            } 
+         }catch(Exception e) {
+            System.err.println(e.getMessage());
+         }
+      }
    }//end
 
    public static void ViewOrderStatus(Cafe esql){
