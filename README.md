@@ -11,7 +11,5 @@ The java folder contains the modified code. If you are trying to run the program
 
 
 TO-DO:
-- Add necessary functionality/meet basic criteria
-- Fix bugs and provide error messages
 - Optimize and improve performance (indexing, etc)
 - Add a graphical user interface (optional)
