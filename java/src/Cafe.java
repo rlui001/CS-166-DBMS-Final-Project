@@ -124,7 +124,7 @@ public class Cafe {
 	    outputHeader = false;
 	 }
          for (int i=1; i<=numCol; ++i)
-            System.out.print (rs.getString(i));
+            System.out.print (rs.getString(i)+ "\t");
             // System.out.printf("%24s", rs.getString(i));
          System.out.println ();
          ++rowCount;
@@ -470,15 +470,33 @@ public class Cafe {
    }//end
 
    public static void BrowseMenuName(Cafe esql){
-      // Your code goes here.
-      // ...
-      // ...
+      try{
+         String query = "SELECT itemName, type, price, description FROM Menu WHERE itemName= ";
+         System.out.print("\tEnter itemName: ");
+         String input = in.readLine();
+         input = "'" + input + "'";
+         query += input;
+
+         int rowCount = esql.executeQueryAndPrintResult(query);
+         //System.out.println ("total row(s): " + rowCount);
+      }catch(Exception e){
+         System.err.println (e.getMessage());
+      }
    }//end
 
    public static void BrowseMenuType(Cafe esql){
-      // Your code goes here.
-      // ...
-      // ...
+      try{
+         String query = "SELECT itemName, type, price, description FROM Menu WHERE type= ";
+         System.out.print("\tEnter type: ");
+         String input = in.readLine();
+         input = "'" + input + "'";
+         query += input;
+
+         int rowCount = esql.executeQueryAndPrintResult(query);
+         //System.out.println ("total row(s): " + rowCount);
+      }catch(Exception e){
+         System.err.println (e.getMessage());
+      }
    }//end
 
    public static Integer AddOrder(Cafe esql){
@@ -699,7 +717,7 @@ public class Cafe {
                               break;
                            }
                            else {
-                              query = String.format("UPDATE ItemStatus SET comments='%s' AND lastUpdated = '%s' WHERE orderid = '%s' AND itemName LIKE '%s'", userInput, timeStamp,  input, item );
+                              query = String.format("UPDATE ItemStatus SET comments='%s', lastUpdated = '%s' WHERE orderid = '%s' AND itemName LIKE '%s'", userInput, timeStamp,  input, item );
                               esql.executeUpdate(query);
 			      break;
                            }
@@ -765,21 +783,21 @@ public class Cafe {
                            case 1:
                               System.out.println("Enter the item you want to modify: ");
                               String item = in.readLine();
-                              query = String.format("UPDATE ItemStatus SET status='Hasn''t Started' AND lastUpdated='%s' WHERE orderid='%s' AND itemName='%s'", timeStamp, oid, item);
+                              query = String.format("UPDATE ItemStatus SET status='Hasn''t Started', lastUpdated='%s' WHERE orderid='%s' AND itemName='%s'", timeStamp, oid, item);
                               esql.executeUpdate(query);
                               System.out.println("Status for item successfully changed to 'Hasn't Started'");
                               break;
                            case 2: 
                               System.out.println("Enter the item you want to modify: ");
                               item = in.readLine();
-                              query = String.format("UPDATE ItemStatus SET status='Started' AND lastUpdated='%s' WHERE orderid='%s' AND itemName='%s'", timeStamp, oid, item);
+                              query = String.format("UPDATE ItemStatus SET status='Started', lastUpdated='%s' WHERE orderid='%s' AND itemName='%s'", timeStamp, oid, item);
                               esql.executeUpdate(query);
                               System.out.println("Status for item successfully changed to 'Started'");
                               break;
                            case 3:
                               System.out.println("Enter the item you want to modify: ");
                               item = in.readLine();
-                              query = String.format("UPDATE ItemStatus SET status='Finished' AND lastUpdated='%s' WHERE orderid='%s' AND itemName='%s'", timeStamp, oid, item);
+                              query = String.format("UPDATE ItemStatus SET status='Finished', lastUpdated='%s' WHERE orderid='%s' AND itemName='%s'", timeStamp, oid, item);
                               esql.executeUpdate(query);
                               System.out.println("Status for item successfully changed to 'Finished'");
                               break;
@@ -851,9 +869,13 @@ public class Cafe {
    }//end
 
    public static void ViewOrderHistory(Cafe esql){
-      // Your code goes here.
-      // ...
-      // ...
+      try{
+         String query = String.format("SELECT orderid FROM Orders WHERE login = '%s' ORDER BY orderid desc LIMIT 5", authorisedUser);
+         int rowCount = esql.executeQueryAndPrintResult(query);
+         //System.out.println ("total row(s): " + rowCount);
+      }catch(Exception e){
+         System.err.println (e.getMessage());
+      }
    }//end
 
    public static void UpdateUserInfo(Cafe esql){ // customer/employee share this function
@@ -1168,15 +1190,46 @@ public class Cafe {
    }//end
 
    public static void ViewOrderStatus(Cafe esql){
-      // Your code goes here.
-      // ...
-      // ...
+      try{
+	 String type = find_type(esql);
+	 
+	 if (type.equals("Customer")) {
+	 String query = String.format("SELECT I.orderid, I.itemName, I.status FROM ItemStatus I, Orders O WHERE I.orderid=O.orderid AND O.login = '%s' AND O.orderid= ", authorisedUser);
+         System.out.print("\tEnter orderid: ");
+         String input = in.readLine();
+         query += input;
+         
+
+         int rowCount = esql.executeQueryAndPrintResult(query);
+         if (rowCount == 0) {
+            System.out.println("Order does not exist or is not placed by you.");
+         }
+         //System.out.println ("total row(s): " + rowCount);
+	 }
+	 else {
+         String query = "SELECT itemName, status FROM ItemStatus WHERE orderid= ";
+         System.out.print("\tEnter orderid: ");
+         String input = in.readLine();
+         query += input;
+
+         int rowCount = esql.executeQueryAndPrintResult(query);
+         //System.out.println ("total row(s): " + rowCount);
+	 }
+      }catch(Exception e){
+         System.err.println (e.getMessage());
+      }
    }//end
 
    public static void ViewCurrentOrder(Cafe esql){
-      // Your code goes here.
-      // ...
-      // ...
+      try{
+         String query = "SELECT orderid, timeStampRecieved FROM Orders WHERE paid=false AND timeStampRecieved>=NOW()-'1 day'::INTERVAL"; 
+
+         int rowCount = esql.executeQueryAndPrintResult(query);
+         //System.out.println ("total row(s): " + rowCount);
+      }catch(Exception e){
+         System.err.println (e.getMessage());
+      }
+ 
    }//end
 
    public static void Query6(Cafe esql){ // useless function?
